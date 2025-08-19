@@ -1,174 +1,217 @@
-<p align="center">
-  <a href="https://vercel.com">
-    <img src="https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png" height="96">
-    <h3 align="center">Vercel</h3>
-  </a>
-</p>
+import React, { useMemo, useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-<p align="center">
-  Develop. Preview. Ship.
-</p>
+// Tek dosya: Paylaşılabilir mini site
+// Kullanım: Önizle -> Açılan sayfanın linkini Rumo'ya gönder.
+// İstersen URL'ye ?ad=Rumo gibi bir parametre vererek ismi değiştirebilirsin.
 
-<p align="center">
-  <a href="https://vercel.com/docs"><strong>Documentation</strong></a> ·
-  <a href="https://vercel.com/changelog"><strong>Changelog</strong></a> ·
-  <a href="https://vercel.com/templates"><strong>Templates</strong></a> ·
-  <a href="https://vercel.com/docs/cli"><strong>CLI</strong></a>
-</p>
-<br/>
+export default function RomantiqueConfession() {
+  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
+  const adParam = params.get("ad");
+  const ad = (adParam || "Rumo").trim();
 
-## Vercel
+  const [stage, setStage] = useState(0); // 0: giriş, 1: soru, 2: kutlama
+  const [hayirPos, setHayirPos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
 
-Vercel’s Frontend Cloud provides the developer experience and infrastructure to build, scale, and secure a faster, more personalized Web.
+  // Emoji yağmuru
+  const hearts = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 2,
+    duration: 4 + Math.random() * 3,
+    size: 18 + Math.random() * 18,
+    rotate: (Math.random() * 60) - 30,
+    emoji: Math.random() > 0.3 ? "💖" : (Math.random() > 0.5 ? "💘" : "💞"),
+  })), []);
 
-## Deploy
+  useEffect(() => {
+    function handleResize() {
+      // Hayır butonu ekran dışına taşmasın diye sıfırla
+      setHayirPos({ x: 0, y: 0 });
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-Get started by [importing a project](https://vercel.com/new), [choosing a template](https://vercel.com/templates), or using the [Vercel CLI](https://vercel.com/docs/cli). Then, `git push` to deploy.
+  const kaçır = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const bounds = el.getBoundingClientRect();
+    const pad = 60; // buton boşluğu
+    const x = (Math.random() * (bounds.width - pad * 2)) - (bounds.width / 2 - pad);
+    const y = (Math.random() * (bounds.height - pad * 2)) - (bounds.height / 2 - pad);
+    setHayirPos({ x, y });
+  };
 
-## Documentation
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert("Link kopyalandı! Rumo'ya gönder.");
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
-For details on how to use Vercel, check out our [documentation](https://vercel.com/docs).
+  return (
+    <div ref={containerRef} className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 p-4">
+      <div className="max-w-md w-full">
+        <motion.div
+          className="rounded-2xl shadow-xl bg-white/80 backdrop-blur p-6 md:p-8 border border-pink-100"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 120, damping: 14 }}
+        >
+          <AnimatePresence mode="wait">
+            {stage === 0 && (
+              <motion.div
+                key="stage0"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+                className="text-center space-y-5"
+              >
+                <div className="text-sm uppercase tracking-widest text-rose-500 font-semibold">mini sürpriz ✨</div>
+                <h1 className="text-3xl md:text-4xl font-extrabold leading-tight">
+                  Merhaba <span className="text-rose-600">{ad}</span> 💐
+                </h1>
+                <p className="text-gray-600">Sana söylemek istediğim küçük ama kalpten bir şey var…</p>
+                <motion.button
+                  onClick={() => setStage(1)}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-500 text-white font-semibold shadow-md hover:shadow-lg transition"
+                >
+                  Devam et
+                </motion.button>
+                <div className="text-xs text-gray-400">İpucu: Sonunda sürpriz var 💫</div>
+              </motion.div>
+            )}
 
-## Contributing
+            {stage === 1 && (
+              <motion.div
+                key="stage1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="relative text-center space-y-6 overflow-hidden"
+              >
+                <h2 className="text-2xl md:text-3xl font-extrabold">
+                  {ad}, benimle <span className="text-rose-600">çıkar mısın</span>? 💞
+                </h2>
+                <p className="text-gray-600">Bence mükemmel bir ikili oluruz. Ne dersin?</p>
 
-This project uses [pnpm](https://pnpm.io/) to install dependencies and run scripts.
+                <div className="h-44 relative flex items-center justify-center">
+                  <motion.button
+                    onClick={() => setStage(2)}
+                    whileTap={{ scale: 0.97 }}
+                    className="py-3 px-6 rounded-xl bg-emerald-500 text-white font-semibold shadow hover:shadow-lg"
+                  >
+                    Evet 💘
+                  </motion.button>
 
-You can use the `vercel` script to run local changes as if you were invoking Vercel CLI. For example, `vercel deploy --cwd=/path/to/project` could be run with local changes with `pnpm vercel deploy --cwd=/path/to/project`.
+                  <motion.button
+                    onMouseEnter={kaçır}
+                    onMouseDown={kaçır}
+                    onTouchStart={kaçır}
+                    animate={{ x: hayirPos.x, y: hayirPos.y }}
+                    transition={{ type: "spring", stiffness: 120, damping: 10 }}
+                    className="py-3 px-6 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow absolute"
+                    style={{ left: "50%", transform: `translate(-50%, -50%)` }}
+                  >
+                    Hayır 😅
+                  </motion.button>
+                </div>
 
-When contributing to this repository, please first discuss the change you wish to make via [Vercel Community](https://community.vercel.com/tags/c/community/4/cli) with the owners of this repository before submitting a Pull Request.
+                <div className="flex gap-2 justify-center text-xs text-gray-400">
+                  <button onClick={copyLink} className="underline">Linki kopyala</button>
+                  <span>•</span>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(ad + ", sana bir şey söylemem lazım…")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    WhatsApp ile gönder
+                  </a>
+                </div>
+              </motion.div>
+            )}
 
-Please read our [Code of Conduct](./.github/CODE_OF_CONDUCT.md) and follow it in all your interactions with the project.
+            {stage === 2 && (
+              <motion.div
+                key="stage2"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+                className="text-center space-y-5"
+              >
+                <h3 className="text-3xl md:text-4xl font-extrabold">
+                  Yaşasın! 🎉
+                </h3>
+                <p className="text-gray-700 text-lg">
+                  {ad}, seni gerçekten <span className="text-rose-600 font-semibold">çok</span> seviyorum. ❤️
+                </p>
+                <p className="text-gray-600">Bunu beraber kutlayalım mı? Dondurma benden 🍦</p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <a
+                    className="py-3 px-4 rounded-xl bg-rose-500 text-white font-semibold shadow hover:shadow-lg"
+                    href={`https://wa.me/?text=${encodeURIComponent(ad + ": Evet dedi! 🎊 İlk buluşmayı planlayalım mı?")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp'tan Yaz
+                  </a>
+                  <button
+                    onClick={() => setStage(1)}
+                    className="py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow"
+                  >
+                    Baştan Oynat ↺
+                  </button>
+                </div>
 
-### Local development
+                {/* Emoji yağmuru */}
+                <div className="pointer-events-none fixed inset-0 overflow-hidden">
+                  {hearts.map((h) => (
+                    <span
+                      key={h.id}
+                      className="absolute select-none"
+                      style={{
+                        left: `${h.left}%`,
+                        top: `-40px`,
+                        fontSize: `${h.size}px`,
+                        animation: `fall ${h.duration}s linear ${h.delay}s infinite`,
+                        transform: `rotate(${h.rotate}deg)`,
+                      }}
+                    >
+                      {h.emoji}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
-This project is configured in a monorepo, where one repository contains multiple npm packages. Dependencies are installed and managed with `pnpm`, not `npm` CLI.
+        <div className="text-center mt-4 text-xs text-gray-400">
+          <span>Made with ❤️ — ismi değiştirmek için URL'ye </span>
+          <code className="px-1 py-0.5 bg-gray-100 rounded">?ad=Rumo</code>
+          <span> ekleyebilirsin.</span>
+        </div>
+      </div>
 
-To get started, execute the following:
+      {/* Stil: düşen emoji animasyonu */}
+      <style>{`
+        @keyframes fall {
+          0% { transform: translateY(-40px) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
 
-```
-git clone https://github.com/vercel/vercel
-cd vercel
-corepack enable
-pnpm install
-pnpm build
-pnpm lint
-pnpm test-unit
-```
-
-Make sure all the tests pass before making changes.
-
-#### Running Vercel CLI Changes
-
-You can use `pnpm vercel` from the `cli` package to invoke Vercel CLI with local changes:
-
-```
-cd ./packages/cli
-pnpm vercel <cli-commands...>
-```
-
-See [CLI Local Development](../packages/cli#local-development) for more details.
-
-### Verifying your change
-
-Once you are done with your changes (we even suggest doing it along the way), make sure all the tests still pass by running:
-
-```
-pnpm test-unit
-```
-
-from the root of the project.
-
-If any test fails, make sure to fix it along with your changes. See [Interpreting test errors](#Interpreting-test-errors) for more information about how the tests are executed, especially the integration tests.
-
-### Pull Request Process
-
-Once you are confident that your changes work properly, open a pull request on the main repository.
-
-The pull request will be reviewed by the maintainers and the tests will be checked by our continuous integration platform.
-
-### Interpreting test errors
-
-There are 2 kinds of tests in this repository – Unit tests and Integration tests.
-
-Unit tests are run locally with `jest` and execute quickly because they are testing the smallest units of code.
-
-#### Integration tests
-
-Integration tests create deployments to your Vercel account using the `test` project name. After each test is deployed, the `probes` key is used to check if the response is the expected value. If the value doesn't match, you'll see a message explaining the difference. If the deployment failed to build, you'll see a more generic message like the following:
-
-```
-[Error: Fetched page https://test-8ashcdlew.vercel.app/root.js does not contain hello Root!. Instead it contains An error occurred with this application.
-
-    NO_STATUS_CODE_FRO Response headers:
-       cache-control=s-maxage=0
-      connection=close
-      content-type=text/plain; charset=utf-8
-      date=Wed, 19 Jun 2019 18:01:37 GMT
-      server=now
-      strict-transport-security=max-age=63072000
-      transfer-encoding=chunked
-      x-now-id=iad1:hgtzj-1560967297876-44ae12559f95
-      x-now-trace=iad1]
-```
-
-In such cases, you can visit the URL of the failed deployment and append `/_logs` to see the build error. In the case above, that would be https://test-8ashcdlew.vercel.app/_logs
-
-The logs of this deployment will contain the actual error which may help you to understand what went wrong.
-
-##### Running integration tests locally
-
-While running the full integration suite locally is not recommended, it's sometimes useful to isolate a failing test by running it on your machine. To do so, you'll need to ensure you have the appropriate credentials sourced in your shell:
-
-1. Create an access token. Follow the instructions here https://vercel.com/docs/rest-api#creating-an-access-token. Ensure the token scope is for your personal
-   account.
-2. Grab the team ID from the Vercel dashboard at `https://vercel.com/<MY-TEAM>/~/settings`.
-3. Source these into your shell rc file: `echo 'export VERCEL_TOKEN=<MY-TOKEN> VERCEL_TEAM_ID=<MY-TEAM-ID>' >> ~/.zshrc`
-
-From there, you should be able to trigger an integration test. Choose one
-that's already isolated to check that things work:
-
-```
-cd packages/next
-```
-
-Run the test:
-
-```
-pnpm test test/fixtures/00-server-build/index.test.js
-```
-
-> [!NOTE]
-> If you receive a `401` status code while fetching the deployment, you need to disable [Deployment Protection](https://vercel.com/docs/security/deployment-protection) on the project.
-
-#### @vercel/nft
-
-Some of the Builders use `@vercel/nft` to tree-shake files before deployment. If you suspect an error with this tree-shaking mechanism, you can create the following script in your project:
-
-```js
-const { nodeFileTrace } = require('@vercel/nft');
-nodeFileTrace(['path/to/entrypoint.js'], {
-  ts: true,
-  mixedModules: true,
-})
-  .then(o => console.log(o.fileList))
-  .then(e => console.error(e));
-```
-
-When you run this script, you'll see all the imported files. If files are missing, the bug is in [@vercel/nft](https://github.com/vercel/nft) and not the Builder.
-
-### Deploy a Builder with existing project
-
-Sometimes you want to test changes to a Builder against an existing project, maybe with `vercel dev` or actual deployment. You can avoid publishing every Builder change to npm by uploading the Builder as a tarball.
-
-1. Change directory to the desired Builder `cd ./packages/node`
-2. Run `pnpm build` to compile typescript and other build steps
-3. Run `npm pack` to create a tarball file
-4. Run `vercel *.tgz` to upload the tarball file and get a URL
-5. Edit any existing `vercel.json` project and replace `use` with the URL
-6. Run `vercel` or `vercel dev` to deploy with the experimental Builder
-
-## Reference
-
-- [Code of Conduct](./.github/CODE_OF_CONDUCT.md)
-- [Contributing Guidelines](./.github/CONTRIBUTING.md)
-- [Apache 2.0 License](./LICENSE)
+      
